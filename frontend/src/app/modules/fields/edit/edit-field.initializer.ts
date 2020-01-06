@@ -40,11 +40,7 @@ import {FormattableEditFieldComponent} from "core-app/modules/fields/edit/field-
 import {WorkPackageCommentFieldComponent} from "core-components/work-packages/work-package-comment/wp-comment-field.component";
 import {SelectAutocompleterRegisterService} from "core-app/modules/fields/edit/field-types/select-autocompleter-register.service";
 import {VersionAutocompleterComponent} from "core-app/modules/common/autocomplete/version-autocompleter.component";
-import {ProjectStatusDisplayField} from "core-app/modules/fields/display/field-types/project-status-display-field.module";
 import {ProjectStatusEditFieldComponent} from "core-app/modules/fields/edit/field-types/project-status-edit-field.component";
-import {WorkPackageIdDisplayField} from "core-app/modules/fields/display/field-types/wp-id-display-field.module";
-import {WorkPackageSpentTimeDisplayField} from "core-app/modules/fields/display/field-types/wp-spent-time-display-field.module";
-import {TextDisplayField} from "core-app/modules/fields/display/field-types/text-display-field.module";
 import {PlainFormattableEditFieldComponent} from "core-app/modules/fields/edit/field-types/plain-formattable-edit-field.component";
 
 

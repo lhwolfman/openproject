@@ -23,6 +23,9 @@ export class TimeEntryEditModal extends OpModalComponent {
     close: this.i18n.t('js.button_close')
   };
 
+  public closeOnEscape = false;
+  public closeOnOutsideClick = false;
+
   constructor(readonly elementRef:ElementRef,
               @Inject(OpModalLocalsToken) readonly locals:OpModalLocalsMap,
               readonly cdRef:ChangeDetectorRef,
