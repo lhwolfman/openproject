@@ -26,13 +26,15 @@
 // See doc/COPYRIGHT.rdoc for more details.
 // ++
 
-import {Component} from "@angular/core";
-import {EditFieldComponent} from "core-app/modules/fields/edit/edit-field.component";
+import {DisplayField} from "core-app/modules/fields/display/display-field.module";
 
-@Component({
-  templateUrl: './text-edit-field.component.html'
-})
-export class TextEditFieldComponent extends EditFieldComponent {
-  // ToDo: Work package specific
-  public shouldFocus = this.name === 'subject';
+export class PlainFormattableDisplayField extends DisplayField {
+  public get value() {
+    if (!this.schema) {
+      return null;
+    }
+    const element = this.resource[this.name];
+
+    return element && element.raw || '';
+  }
 }

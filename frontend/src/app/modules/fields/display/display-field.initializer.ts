@@ -47,6 +47,7 @@ import {UserDisplayField} from "core-app/modules/fields/display/field-types/user
 import {MultipleUserFieldModule} from "core-app/modules/fields/display/field-types/multiple-user-display-field.module";
 import {WorkPackageIdDisplayField} from "core-app/modules/fields/display/field-types/wp-id-display-field.module";
 import {ProjectStatusDisplayField} from "core-app/modules/fields/display/field-types/project-status-display-field.module";
+import {PlainFormattableDisplayField} from "core-app/modules/fields/display/field-types/plain-formattable-display-field.module";
 
 export function initializeCoreDisplayFields(displayFieldService:DisplayFieldService) {
   return () => {
@@ -80,6 +81,7 @@ export function initializeCoreDisplayFields(displayFieldService:DisplayFieldServ
 
     displayFieldService
         .addSpecificFieldType('WorkPackage', WorkPackageIdDisplayField, 'id', ['id'])
-        .addSpecificFieldType('WorkPackage', WorkPackageSpentTimeDisplayField, 'spentTime', ['spentTime']);
+        .addSpecificFieldType('WorkPackage', WorkPackageSpentTimeDisplayField, 'spentTime', ['spentTime'])
+        .addSpecificFieldType('TimeEntry', PlainFormattableDisplayField, 'comment', ['comment']);
   };
 }

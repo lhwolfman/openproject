@@ -80,12 +80,12 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
   let(:user) do
     FactoryBot.create(:user,
                       member_in_project: project,
-                      member_with_permissions: %i[view_time_entries edit_time_entries])
+                      member_with_permissions: %i[view_time_entries edit_time_entries view_work_packages])
   end
   let(:my_page) do
     Pages::My::Page.new
   end
-  let(:comments_field) { ::TextEditorField.new(page, 'comment') }
+  let(:comments_field) { ::EditField.new(page, 'comment') }
 
   before do
     login_as user
@@ -151,7 +151,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
       .to have_content(I18n.t('js.time_entry.edit'))
 
     comments_field.activate!
-    comments_field.type('Some comment')
+    comments_field.set_value('Some comment')
     comments_field.save!
 
     find(".op-modal--portal .op-modal--modal-close-button").click

@@ -207,7 +207,7 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
           </li>
           <li class="tooltip--map--item">
             <span class="tooltip--map--key">${this.i18n.t('js.time_entry.comment')}:</span>
-            <span class="tooltip--map--value">${entry.comment.html || this.i18n.t('js.placeholders.default')}</span>
+            <span class="tooltip--map--value">${entry.comment.raw || this.i18n.t('js.placeholders.default')}</span>
           </li>
         `;
   }

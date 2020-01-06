@@ -32,7 +32,20 @@ import {EditFieldComponent} from "core-app/modules/fields/edit/edit-field.compon
 @Component({
   templateUrl: './text-edit-field.component.html'
 })
-export class TextEditFieldComponent extends EditFieldComponent {
-  // ToDo: Work package specific
-  public shouldFocus = this.name === 'subject';
+export class PlainFormattableEditFieldComponent extends EditFieldComponent {
+  // only exists because the template is reused and the property is required there.
+  public shouldFocus = false;
+
+  public get value() {
+    if (!this.schema) {
+      return '';
+    }
+    const element = this.resource[this.name];
+
+    return element && element.raw || '';
+  }
+
+  public set value(newValue:string) {
+    this.resource[this.name] = { raw: newValue };
+  }
 }
