@@ -33,6 +33,8 @@ require_relative '../../support/pages/my/page'
 describe 'My page time entries current user widget spec', type: :feature, js: true, with_mail: false do
   let!(:type) { FactoryBot.create :type }
   let!(:project) { FactoryBot.create :project, types: [type] }
+  let!(:activity) { FactoryBot.create :time_entry_activity }
+  let!(:other_activity) { FactoryBot.create :time_entry_activity }
   let!(:work_package) do
     FactoryBot.create :work_package,
                       project: project,
@@ -43,6 +45,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     FactoryBot.create :time_entry,
                       work_package: work_package,
                       project: project,
+                      activity: activity,
                       user: user,
                       spent_on: Date.today,
                       hours: 3,
@@ -52,6 +55,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     FactoryBot.create :time_entry,
                       work_package: work_package,
                       project: project,
+                      activity: activity,
                       user: user,
                       # limit the date to ensure that it is on the current calendar sheet
                       spent_on: Date.today - [1, Date.today.wday].min.days,
@@ -62,6 +66,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     FactoryBot.create :time_entry,
                       work_package: work_package,
                       project: project,
+                      activity: activity,
                       user: user,
                       spent_on: Date.today - (Date.today.wday + 3).days,
                       hours: 8,
@@ -71,6 +76,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     FactoryBot.create :time_entry,
                       work_package: work_package,
                       project: project,
+                      activity: activity,
                       user: other_user,
                       hours: 4
   end
@@ -86,6 +92,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     Pages::My::Page.new
   end
   let(:comments_field) { ::EditField.new(page, 'comment') }
+  let(:activity_field) { ::EditField.new(page, 'activity') }
 
   before do
     login_as user
@@ -153,6 +160,9 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     comments_field.activate!
     comments_field.set_value('Some comment')
     comments_field.save!
+
+    activity_field.activate!
+    activity_field.set_value(other_activity.name)
 
     find(".op-modal--portal .op-modal--modal-close-button").click
 

@@ -63,6 +63,7 @@ export function initializeCoreDisplayFields(displayFieldService:DisplayFieldServ
       .addFieldType(TypeDisplayField, 'type', ['Type'])
       .addFieldType(ResourceDisplayField, 'resource', [
         'Project',
+        'TimeEntriesActivity',
         'Version',
         'Category',
         'CustomOption'])

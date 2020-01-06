@@ -17,7 +17,8 @@ export class TimeEntryEditModal extends OpModalComponent {
   text = {
     title: this.i18n.t('js.time_entry.edit'),
     attributes: {
-      comment: this.i18n.t('js.time_entry.comment')
+      comment: this.i18n.t('js.time_entry.comment'),
+      activity: this.i18n.t('js.time_entry.activity')
     },
     close: this.i18n.t('js.button_close')
   };
