@@ -80,11 +80,12 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
   let(:user) do
     FactoryBot.create(:user,
                       member_in_project: project,
-                      member_with_permissions: %i[view_time_entries])
+                      member_with_permissions: %i[view_time_entries edit_time_entries])
   end
   let(:my_page) do
     Pages::My::Page.new
   end
+  let(:comments_field) { ::TextEditorField.new(page, 'comment') }
 
   before do
     login_as user
@@ -103,12 +104,12 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
       .to have_content "Total: 5.00"
 
     expect(page)
-      .to have_content visible_time_entry.spent_on.strftime('%m/%d')
+      .to have_content visible_time_entry.spent_on.strftime('%-m/%-d')
     expect(page)
       .to have_selector('.fc-event .fc-title', text: "#{project.name} - ##{work_package.id}: #{work_package.subject}")
 
     expect(page)
-      .to have_content(other_visible_time_entry.spent_on.strftime('%m/%d'))
+      .to have_content(other_visible_time_entry.spent_on.strftime('%-m/%-d'))
     expect(page)
       .to have_selector('.fc-event .fc-title', text: "#{project.name} - ##{work_package.id}: #{work_package.subject}")
 
@@ -121,7 +122,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
       .to have_content "Total: 8.00"
 
     expect(page)
-      .to have_content(last_week_visible_time_entry.spent_on.strftime('%m/%d'))
+      .to have_content(last_week_visible_time_entry.spent_on.strftime('%-m/%-d'))
     expect(page)
       .to have_selector('.fc-event .fc-title', text: "#{project.name} - ##{work_package.id}: #{work_package.subject}")
 
@@ -139,6 +140,25 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
 
     expect(page)
       .to have_selector('.ui-tooltip', text: "Project: #{project.name}")
+
+    # Editing an entry
+
+    within entries_area.area do
+      find(".fc-content-skeleton td:nth-of-type(#{Date.today.wday + 1}) .fc-event-container .fc-event").click
+    end
+
+    expect(page)
+      .to have_content(I18n.t('js.time_entry.edit'))
+
+    comments_field.activate!
+    comments_field.type('Some comment')
+    comments_field.save!
+
+    find(".op-modal--portal .op-modal--modal-close-button").click
+
+    my_page.expect_notification message: I18n.t(:notice_successful_update)
+
+    # Removing the widget
 
     entries_area.remove
 

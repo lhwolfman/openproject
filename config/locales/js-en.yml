@@ -482,6 +482,7 @@ en:
       comment: 'Comment'
       duration: 'Duration'
       hours: 'Hours'
+      edit: 'Edit time entry'
 
     watchers:
       label_loading: loading watchers...

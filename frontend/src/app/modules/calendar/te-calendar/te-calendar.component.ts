@@ -1,4 +1,4 @@
-import {Component, ElementRef, Input, OnDestroy, OnInit, SecurityContext, ViewChild, AfterViewInit, Output, EventEmitter} from "@angular/core";
+import {Component, ElementRef, Input, OnDestroy, OnInit, SecurityContext, ViewChild, AfterViewInit, Output, EventEmitter, Injector} from "@angular/core";
 import {FullCalendarComponent} from '@fullcalendar/angular';
 import {States} from "core-components/states.service";
 import * as moment from "moment";
@@ -17,6 +17,9 @@ import {FilterOperator} from "core-components/api/api-v3/api-v3-filter-builder";
 import {TimeEntryResource} from "core-app/modules/hal/resources/time-entry-resource";
 import {TimezoneService} from "core-components/datetime/timezone.service";
 import {CollectionResource} from "core-app/modules/hal/resources/collection-resource";
+import {OpModalService} from "core-components/op-modals/op-modal.service";
+import { TimeEntryEditService } from './edit/edit.service';
+import {TimeEntryCacheService} from "core-components/time-entries/time-entry-cache.service";
 
 interface CalendarViewEvent {
   el:HTMLElement;
@@ -47,16 +50,21 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
   public calendarAllDaySlot = false;
   public calendarDisplayEventTime = false;
   public calendarSlotEventOverlap = false;
+  public calendarEditable = false;
 
   constructor(readonly states:States,
               readonly timeEntryDm:TimeEntryDmService,
               readonly $state:StateService,
               private element:ElementRef,
               readonly i18n:I18nService,
+              readonly injector:Injector,
               readonly notificationsService:NotificationsService,
               private sanitizer:DomSanitizer,
               private configuration:ConfigurationService,
-              private timezone:TimezoneService) { }
+              private timezone:TimezoneService,
+              private timeEntryEdit:TimeEntryEditService,
+              private timeEntryCache:TimeEntryCacheService,
+              private opModal:OpModalService) { }
 
   ngOnInit() {
     this.initializeCalendar();
@@ -71,6 +79,7 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
     // see: https://github.com/fullcalendar/fullcalendar-angular/issues/228#issuecomment-523505044
     // Therefore, setting the outputs via the underlying API
     this.ucCalendar.getApi().setOption('eventRender', (event:CalendarViewEvent) => { this.addTooltip(event); });
+    this.ucCalendar.getApi().setOption('eventClick', (event:CalendarViewEvent) => { this.editEvent(event); });
   }
 
   public calendarEventsFunction(fetchInfo:{ start:Date, end:Date, timeZone:string },
@@ -80,6 +89,9 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
     this.timeEntryDm.list({ filters: this.dmFilters(fetchInfo) })
       .then((collection) => {
         this.entries.emit(collection);
+        // TODO: check if fetching can be placed inside the cache service
+        collection.elements.forEach(timeEntry => this.timeEntryCache.updateValue(timeEntry.id!, timeEntry));
+
         successCallback(this.buildEntries(collection.elements));
       });
   }
@@ -124,10 +136,6 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
     this.calendarEvents = this.calendarEventsFunction.bind(this);
   }
 
-  public get calendarEditable() {
-    return false;
-  }
-
   public get calendarEventLimit() {
     return false;
   }
@@ -150,6 +158,10 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
 
   private get calendarElement() {
     return jQuery(this.element.nativeElement).find('.fc-view-container');
+  }
+
+  private editEvent(event:CalendarViewEvent) {
+    this.timeEntryEdit.edit(event.event.extendedProps.entry);
   }
 
   private addTooltip(event:CalendarViewEvent) {
