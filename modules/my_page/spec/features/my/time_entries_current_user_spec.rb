@@ -93,6 +93,7 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
   end
   let(:comments_field) { ::EditField.new(page, 'comment') }
   let(:activity_field) { ::EditField.new(page, 'activity') }
+  let(:hours_field) { ::EditField.new(page, 'hours') }
 
   before do
     login_as user
@@ -105,6 +106,9 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     my_page.add_widget(1, 1, :within, 'Spent time')
 
     entries_area = Components::Grids::GridArea.new('.grid--area.-widgeted:nth-of-type(1)')
+
+    my_page.expect_and_dismiss_notification message: I18n.t(:notice_successful_update)
+
     entries_area.expect_to_span(1, 1, 2, 2)
 
     expect(page)
@@ -157,16 +161,40 @@ describe 'My page time entries current user widget spec', type: :feature, js: tr
     expect(page)
       .to have_content(I18n.t('js.time_entry.edit'))
 
+    activity_field.activate!
+    activity_field.set_value(other_activity.name)
+    activity_field.autocomplete_selector.send_keys :enter
+    sleep(1)
+
+    hours_field.activate!
+    hours_field.set_value('6')
+    hours_field.save!
+
+    sleep(1)
+
     comments_field.activate!
     comments_field.set_value('Some comment')
     comments_field.save!
 
-    activity_field.activate!
-    activity_field.set_value(other_activity.name)
+    sleep(1)
 
     find(".op-modal--portal .op-modal--modal-close-button").click
 
-    my_page.expect_notification message: I18n.t(:notice_successful_update)
+    sleep(0.1)
+    my_page.expect_and_dismiss_notification message: I18n.t(:notice_successful_update)
+
+    within entries_area.area do
+      find(".fc-content-skeleton td:nth-of-type(#{Date.today.wday + 1}) .fc-event-container .fc-event").hover
+    end
+
+    expect(page)
+      .to have_selector('.ui-tooltip', text: "Comment: Some comment")
+
+    expect(page)
+      .to have_selector('.ui-tooltip', text: "Activity: #{other_activity.name}")
+
+    expect(page)
+      .to have_content "Total: 9.00"
 
     # Removing the widget
 

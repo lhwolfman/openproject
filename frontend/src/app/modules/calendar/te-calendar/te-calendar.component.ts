@@ -17,7 +17,6 @@ import {FilterOperator} from "core-components/api/api-v3/api-v3-filter-builder";
 import {TimeEntryResource} from "core-app/modules/hal/resources/time-entry-resource";
 import {TimezoneService} from "core-components/datetime/timezone.service";
 import {CollectionResource} from "core-app/modules/hal/resources/collection-resource";
-import {OpModalService} from "core-components/op-modals/op-modal.service";
 import { TimeEntryEditService } from './edit/edit.service';
 import {TimeEntryCacheService} from "core-components/time-entries/time-entry-cache.service";
 
@@ -52,6 +51,8 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
   public calendarSlotEventOverlap = false;
   public calendarEditable = false;
 
+  protected memoizedTimeEntries:{start:Date, end:Date, entries:Promise<CollectionResource<TimeEntryResource>>};
+
   constructor(readonly states:States,
               readonly timeEntryDm:TimeEntryDmService,
               readonly $state:StateService,
@@ -63,8 +64,7 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
               private configuration:ConfigurationService,
               private timezone:TimezoneService,
               private timeEntryEdit:TimeEntryEditService,
-              private timeEntryCache:TimeEntryCacheService,
-              private opModal:OpModalService) { }
+              private timeEntryCache:TimeEntryCacheService) { }
 
   ngOnInit() {
     this.initializeCalendar();
@@ -82,21 +82,39 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
     this.ucCalendar.getApi().setOption('eventClick', (event:CalendarViewEvent) => { this.editEvent(event); });
   }
 
-  public calendarEventsFunction(fetchInfo:{ start:Date, end:Date, timeZone:string },
+  public calendarEventsFunction(fetchInfo:{ start:Date, end:Date },
                                 successCallback:(events:EventInput[]) => void,
                                 failureCallback:(error:EventSourceError) => void ):void | PromiseLike<EventInput[]> {
 
-    this.timeEntryDm.list({ filters: this.dmFilters(fetchInfo) })
+    this.fetchTimeEntries(fetchInfo.start, fetchInfo.end)
       .then((collection) => {
         this.entries.emit(collection);
-        // TODO: check if fetching can be placed inside the cache service
-        collection.elements.forEach(timeEntry => this.timeEntryCache.updateValue(timeEntry.id!, timeEntry));
 
         successCallback(this.buildEntries(collection.elements));
       });
   }
 
-  private buildEntries(entries:TimeEntryResource[]) {
+  protected fetchTimeEntries(start:Date, end:Date) {
+    if (!this.memoizedTimeEntries ||
+        this.memoizedTimeEntries.start.getTime() !== start.getTime() ||
+        this.memoizedTimeEntries.end.getTime() !== end.getTime()) {
+      let promise = this
+        .timeEntryDm
+        .list({ filters: this.dmFilters(start, end) })
+        .then(collection => {
+          // TODO: check if fetching can be placed inside the cache service
+          collection.elements.forEach(timeEntry => this.timeEntryCache.updateValue(timeEntry.id!, timeEntry));
+
+          return collection;
+        });
+
+      this.memoizedTimeEntries = { start: start, end: end, entries: promise };
+    }
+
+    return this.memoizedTimeEntries.entries;
+  }
+
+private buildEntries(entries:TimeEntryResource[]) {
     let calendarEntries = [];
 
     let hoursDistribution:{ [key:string]:Moment } = {};
@@ -125,9 +143,9 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
     });
   }
 
-  protected dmFilters(fetchInfo:{ start:Date, end:Date, timeZone:string }):Array<[string, FilterOperator, string[]]> {
-    let startDate = moment(fetchInfo.start).format('YYYY-MM-DD');
-    let endDate = moment(fetchInfo.end).subtract(1, 'd').format('YYYY-MM-DD');
+  protected dmFilters(start:Date, end:Date):Array<[string, FilterOperator, string[]]> {
+    let startDate = moment(start).format('YYYY-MM-DD');
+    let endDate = moment(end).subtract(1, 'd').format('YYYY-MM-DD');
     return [['spentOn', '<>d', [startDate, endDate]] as [string, FilterOperator, string[]],
            ['user_id', '=', ['me']] as [string, FilterOperator, [string]]];
   }
@@ -161,7 +179,21 @@ export class TimeEntryCalendarComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   private editEvent(event:CalendarViewEvent) {
-    this.timeEntryEdit.edit(event.event.extendedProps.entry);
+    let originalEntry = event.event.extendedProps.entry;
+
+    this
+      .timeEntryEdit
+      .edit(originalEntry)
+      .then(modifiedEntry => {
+        this.memoizedTimeEntries.entries.then(collection => {
+          //let newEvent = this.buildEntries([modifiedEntry]);
+
+          let foundIndex = collection.elements.findIndex(x => x.id === originalEntry.id);
+          collection.elements[foundIndex] = modifiedEntry;
+
+          this.ucCalendar.getApi().refetchEvents();
+        });
+      });
   }
 
   private addTooltip(event:CalendarViewEvent) {

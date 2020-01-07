@@ -15,6 +15,7 @@ import {TimeEntryDmService} from "core-app/modules/hal/dm-services/time-entry-dm
 import { TimeEntryResource } from 'core-app/modules/hal/resources/time-entry-resource';
 import {FormResource} from "core-app/modules/hal/resources/form-resource";
 import { TimeEntryEditModal } from './edit.modal';
+import { take } from 'rxjs/operators';
 
 @Injectable()
 export class TimeEntryEditService {
@@ -27,15 +28,17 @@ export class TimeEntryEditService {
 
   public edit(entry:TimeEntryResource) {
      return this
-            .editByForm(entry)
-            .then(editedEntry => {
-              return editedEntry;
-            });
+            .editByForm(entry);
   }
 
   private editByForm(entry:TimeEntryResource) {
-    return new Promise<TimeEntryResource>((resolve, reject) => {
+    return new Promise<TimeEntryResource>((resolve) => {
       const modal = this.opModalService.show(TimeEntryEditModal, this.injector, { entry: entry });
+
+      modal
+        .closingEvent
+        .pipe(take(1))
+        .subscribe(() => resolve(modal.modifiedEntry));
     });
   }
 }
